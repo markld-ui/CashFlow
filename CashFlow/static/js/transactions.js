@@ -1,5 +1,4 @@
 // static/js/transactions.js
-import { apiRequest, showAlert, toggleLoading, formatAmount, formatDate } from './app.js';
 
 async function loadTransactions(page = 1) {
     toggleLoading(true);
@@ -31,8 +30,9 @@ function getFilters() {
 
 function renderTransactions(transactions) {
     const tbody = document.getElementById('transactions-body');
-    tbody.innerHTML = '';
+    if (!tbody) return;
 
+    tbody.innerHTML = '';
     if (transactions.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -91,7 +91,7 @@ function renderPagination(data) {
 
     pagination.innerHTML = `
         <li class="page-item ${prevDisabled}">
-            <a class="page-link" href="#" onclick="loadTransactions(${currentPage - 1})">
+            <a class="page-link" href="#" onclick="loadTransactions(${currentPage - 1}); return false;">
                 <i class="bi bi-chevron-left"></i>
             </a>
         </li>
@@ -101,14 +101,14 @@ function renderPagination(data) {
     pageRange.forEach(page => {
         pagination.innerHTML += `
             <li class="page-item ${page === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="loadTransactions(${page})">${page}</a>
+                <a class="page-link" href="#" onclick="loadTransactions(${page}); return false;">${page}</a>
             </li>
         `;
     });
 
     pagination.innerHTML += `
         <li class="page-item ${nextDisabled}">
-            <a class="page-link" href="#" onclick="loadTransactions(${currentPage + 1})">
+            <a class="page-link" href="#" onclick="loadTransactions(${currentPage + 1}); return false;">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </li>
@@ -139,7 +139,6 @@ async function loadFilterOptions() {
     try {
         const data = await apiRequest('reference-data/');
         
-        // Заполнение фильтров
         const statusSelect = document.getElementById('filter-status');
         const typeSelect = document.getElementById('filter-type');
         const categorySelect = document.getElementById('filter-category');
@@ -201,10 +200,10 @@ async function deleteTransaction(id) {
 }
 
 function loadTransactionForm(id = null) {
+    console.log('loadTransactionForm called with id:', id); // Для отладки
     window.location.href = id ? `/transaction/${id}/` : '/transaction/';
 }
 
-// Экспорт функций для использования в HTML
 window.loadTransactions = loadTransactions;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;

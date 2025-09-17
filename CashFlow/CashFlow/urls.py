@@ -48,5 +48,6 @@ urlpatterns = [
 
     path('', views_frontend.IndexView.as_view(), name='index'),
     path('transaction/<str:transaction_id>/', views_frontend.TransactionFormView.as_view(), name='transaction-form'),
+    path('transaction/', views_frontend.TransactionFormView.as_view(), name='transaction-form-new'),
     path('references/', views_frontend.ReferencesView.as_view(), name='references'),
 ]

@@ -48,14 +48,16 @@ function getCookie(name) {
 // Отображение уведомлений
 function showAlert(type, message) {
     const alertsContainer = document.getElementById('alerts-container');
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-dismissible fade show`;
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    alertsContainer.appendChild(alert);
-    setTimeout(() => alert.remove(), 5000);
+    if (alertsContainer) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        alertsContainer.appendChild(alert);
+        setTimeout(() => alert.remove(), 5000);
+    }
 }
 
 // Управление состоянием загрузки
@@ -86,5 +88,9 @@ function formatDate(dateStr) {
     });
 }
 
-// Экспорт функций для использования в других файлах
-export { apiRequest, showAlert, toggleLoading, formatAmount, formatDate };
+// Глобальные функции
+window.apiRequest = apiRequest;
+window.showAlert = showAlert;
+window.toggleLoading = toggleLoading;
+window.formatAmount = formatAmount;
+window.formatDate = formatDate;

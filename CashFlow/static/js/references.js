@@ -1,5 +1,4 @@
 // static/js/references.js
-import { apiRequest, showAlert, toggleLoading } from './app.js';
 
 async function initializeReferences() {
     try {
@@ -69,7 +68,6 @@ async function loadFilterOptions() {
     try {
         const data = await apiRequest('reference-data/');
         
-        // Заполнение фильтров для категорий
         const categoryFilter = document.querySelector('#categories select');
         if (categoryFilter) {
             categoryFilter.innerHTML = '<option value="">Все типы операций</option>';
@@ -78,7 +76,6 @@ async function loadFilterOptions() {
             });
         }
 
-        // Заполнение фильтров для подкатегорий
         const subcategoryFilter = document.querySelector('#subcategories select');
         if (subcategoryFilter) {
             subcategoryFilter.innerHTML = '<option value="">Все категории</option>';
