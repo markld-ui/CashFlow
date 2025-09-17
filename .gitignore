@@ -1,0 +1,23 @@
+# Django-specific files
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/ # Or the specific path to your media files if different
+
+# Virtual Environment
+.env
+venv/
+env/
+
+# PyCharm-specific files (if using PyCharm)
+.idea/
+
+# Other common files to ignore
+.DS_Store
+Thumbs.db
+.coverage
+.tox/
+.eggs/
