@@ -11,6 +11,8 @@ class TransactionFilter(django_filters.FilterSet):
     category = NumberFilter(field_name='category__id')
     subcategory = NumberFilter(field_name='subcategory__id')
     search = CharFilter(method='filter_search')
+    amount_min = NumberFilter(field_name='amount', lookup_expr='gte')
+    amount_max = NumberFilter(field_name='amount', lookup_expr='lte')
     
     class Meta:
         model = Transaction

@@ -119,7 +119,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
     Предоставляет полный CRUD для операций движения денежных средств.
     Включает расширенную фильтрацию, поиск и статистические endpoints.
     """
-    queryset = Transaction.objects.all().order_by('-transaction_date')
+    queryset = Transaction.objects.select_related(
+        'status', 'transaction_type', 'category', 'subcategory'
+    ).order_by('-transaction_date')
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = TransactionFilter
     search_fields = ['comment', 'category__name', 'subcategory__name']

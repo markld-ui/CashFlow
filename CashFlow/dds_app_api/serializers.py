@@ -69,6 +69,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id', 'created_date', 'status_name', 'transaction_type_name', 
                            'category_name', 'subcategory_name')
+        
 
 class TransactionCreateSerializer(serializers.ModelSerializer):
     """
@@ -81,6 +82,20 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = '__all__'
         read_only_fields = ('created_date',)
+
+    
+    def validate(self, data):
+        if data['category'].transaction_type != data['transaction_type']:
+            raise serializers.ValidationError(
+                "Категория не соответствует типу операции"
+            )
+        
+        if data['subcategory'].category != data['category']:
+            raise serializers.ValidationError(
+                "Подкатегория не соответствует категории"
+            )
+        
+        return data
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
     """
