@@ -19,6 +19,7 @@ from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from dds_app_api import views_frontend
 
 
 schema_view = get_schema_view(
@@ -44,4 +45,8 @@ urlpatterns = [
             schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', 
             schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    path('', views_frontend.IndexView.as_view(), name='index'),
+    path('transaction/<str:transaction_id>/', views_frontend.TransactionFormView.as_view(), name='transaction-form'),
+    path('references/', views_frontend.ReferencesView.as_view(), name='references'),
 ]
