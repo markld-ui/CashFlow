@@ -1,0 +1,105 @@
+<input type="hidden" id="transaction-id" value="{{ transaction_id }}">
+
+<div class="col-md-6 mb-3">
+    <label for="transaction_date" class="form-label">
+        <i class="bi bi-calendar me-1"></i>Дата операции *
+    </label>
+    <input type="date" class="form-control" id="transaction_date" required
+           value="{{ today|date:'Y-m-d' }}">
+    <div class="invalid-feedback">Пожалуйста, укажите дату операции</div>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="status" class="form-label">
+        <i class="bi bi-tag me-1"></i>Статус *
+    </label>
+    <select class="form-select" id="status" required>
+        <option value="">Выберите статус...</option>
+        {% for status in statuses %}
+        <option value="{{ status.id }}">{{ status.name }}</option>
+        {% endfor %}
+    </select>
+    <div class="invalid-feedback">Пожалуйста, выберите статус</div>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="transaction_type" class="form-label">
+        <i class="bi bi-arrow-left-right me-1"></i>Тип операции *
+    </label>
+    <select class="form-select" id="transaction_type" required onchange="updateCategories()">
+        <option value="">Выберите тип...</option>
+        {% for type in transaction_types %}
+        <option value="{{ type.id }}">{{ type.name }}</option>
+        {% endfor %}
+    </select>
+    <div class="invalid-feedback">Пожалуйста, выберите тип операции</div>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="category" class="form-label">
+        <i class="bi bi-folder me-1"></i>Категория *
+    </label>
+    <select class="form-select" id="category" required onchange="updateSubcategories()" disabled>
+        <option value="">Сначала выберите тип...</option>
+    </select>
+    <div class="invalid-feedback">Пожалуйста, выберите категорию</div>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="subcategory" class="form-label">
+        <i class="bi bi-folder2 me-1"></i>Подкатегория *
+    </label>
+    <select class="form-select" id="subcategory" required disabled>
+        <option value="">Сначала выберите категорию...</option>
+    </select>
+    <div class="invalid-feedback">Пожалуйста, выберите подкатегорию</div>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="amount" class="form-label">
+        <i class="bi bi-currency-ruble me-1"></i>Сумма (₽) *
+    </label>
+    <div class="input-group">
+        <span class="input-group-text">₽</span>
+        <input type="number" class="form-control" id="amount" step="0.01" min="0" required
+               placeholder="0.00" oninput="formatAmount(this)">
+    </div>
+    <div class="invalid-feedback">Пожалуйста, укажите корректную сумму</div>
+</div>
+
+<div class="col-12 mb-3">
+    <label for="comment" class="form-label">
+        <i class="bi bi-chat me-1"></i>Комментарий
+    </label>
+    <textarea class="form-control" id="comment" rows="3" 
+              placeholder="Опишите назначение транзакции..."></textarea>
+    <div class="form-text">Необязательное поле для дополнительной информации</div>
+</div>
+
+<div class="col-12 mb-3">
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Поля, отмеченные *</strong>, обязательны для заполнения.
+    </div>
+</div>
+
+<div class="col-12">
+    <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-2"></i>Отмена
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ transaction_id ? 'Обновить' : 'Создать' }} транзакцию
+        </button>
+    </div>
+</div>
+
+<div class="col-12">
+    <div id="form-loading" class="text-center py-3" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+        <p class="text-muted mt-2">Загрузка данных...</p>
+    </div>
+</div>

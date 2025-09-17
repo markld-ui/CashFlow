@@ -1,0 +1,96 @@
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Фильтры транзакций
+            <small class="text-muted ms-2">Найдите нужные записи</small>
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-date-from" class="form-label">
+                    <i class="bi bi-calendar-minus me-1"></i>Дата от
+                </label>
+                <input type="date" class="form-control filter-input" id="filter-date-from">
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-date-to" class="form-label">
+                    <i class="bi bi-calendar-plus me-1"></i>Дата до
+                </label>
+                <input type="date" class="form-control filter-input" id="filter-date-to">
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-status" class="form-label">
+                    <i class="bi bi-tag me-1"></i>Статус
+                </label>
+                <select class="form-select filter-input" id="filter-status">
+                    <option value="">Все статусы</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-type" class="form-label">
+                    <i class="bi bi-arrow-left-right me-1"></i>Тип операции
+                </label>
+                <select class="form-select filter-input" id="filter-type">
+                    <option value="">Все типы</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-category" class="form-label">
+                    <i class="bi bi-folder me-1"></i>Категория
+                </label>
+                <select class="form-select filter-input" id="filter-category">
+                    <option value="">Все категории</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-subcategory" class="form-label">
+                    <i class="bi bi-folder2 me-1"></i>Подкатегория
+                </label>
+                <select class="form-select filter-input" id="filter-subcategory">
+                    <option value="">Все подкатегории</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-search" class="form-label">
+                    <i class="bi bi-search me-1"></i>Поиск
+                </label>
+                <input type="text" class="form-control filter-input" id="filter-search" 
+                       placeholder="По комментариям, категориям...">
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-amount-min" class="form-label">
+                    <i class="bi bi-currency-ruble me-1"></i>Сумма от
+                </label>
+                <input type="number" class="form-control filter-input" id="filter-amount-min" 
+                       placeholder="Мин. сумма" step="0.01">
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <label for="filter-amount-max" class="form-label">
+                    <i class="bi bi-currency-ruble me-1"></i>Сумма до
+                </label>
+                <input type="number" class="form-control filter-input" id="filter-amount-max" 
+                       placeholder="Макс. сумма" step="0.01">
+            </div>
+
+            <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                        <i class="bi bi-x-circle me-2"></i>Сбросить все
+                    </button>
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="bi bi-filter me-2"></i>Применить фильтры
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
