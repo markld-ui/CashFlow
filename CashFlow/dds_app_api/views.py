@@ -6,6 +6,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Sum, Count
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Status, TransactionType, Category, Subcategory, Transaction
 from .serializers import (
@@ -127,11 +128,37 @@ class TransactionViewSet(viewsets.ModelViewSet):
     filterset_class = TransactionFilter
     search_fields = ['comment', 'category__name', 'subcategory__name']
     ordering_fields = ['transaction_date', 'amount', 'created_date']
+    pagination_class = PageNumberPagination
+    page_size = 10  # 10 элементов на страницу
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return TransactionCreateSerializer
         return TransactionSerializer
+    
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        
+        # Проверяем что пагинатор существует
+        if hasattr(response, 'paginator') and response.paginator is not None:
+            page = response.paginator.page
+            paginator = response.paginator.page.paginator
+            
+            response.data.update({
+                'pagination': {
+                    'current_page': page.number,
+                    'total_pages': paginator.num_pages,
+                    'total_count': paginator.count,
+                    'has_next': page.has_next(),
+                    'has_previous': page.has_previous(),
+                    'next_page': page.next_page_number() if page.has_next() else None,
+                    'previous_page': page.previous_page_number() if page.has_previous() else None,
+                    'start_index': page.start_index(),
+                    'end_index': page.end_index(),
+                }
+            })
+        
+        return response
     
     def perform_create(self, serializer):
         serializer.save()
@@ -149,15 +176,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def summary(self, request):
         """
         Получить статистическую сводку по транзакциям.
-        
-        Parameters:
-            date_from (date): Начальная дата периода (опционально)
-            date_to (date): Конечная дата периода (опционально)
-            transaction_type (int): ID типа операции для фильтрации (опционально)
-        
-        Returns:
-            object: Статистика включающая общее количество, сумму, среднее значение,
-                   доход, расход, баланс, группировку по типам и категориям операций
         """
         queryset = self.filter_queryset(self.get_queryset())
         

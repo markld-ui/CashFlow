@@ -1,16 +1,25 @@
 // static/js/transactions.js
 
+let currentPage = 1;
+
 async function loadTransactions(page = 1) {
+    currentPage = page;
     toggleLoading(true);
     try {
         const filters = getFilters();
-        const queryString = new URLSearchParams({ ...filters, page }).toString();
+        const queryString = new URLSearchParams({ ...filters, page, page_size: 10 }).toString();
         const data = await apiRequest(`transactions/?${queryString}`);
         
-        renderTransactions(data.results);
+        console.log('Полный ответ API:', data);
+        console.log('Результаты:', data.results);
+        console.log('Пагинация:', data.pagination);
+        console.log('Счетчик:', data.count);
+        
+        renderTransactions(data.results || data);
         renderPagination(data);
         updateStatistics();
     } catch (error) {
+        console.error('Error loading transactions:', error);
         showAlert('danger', 'Не удалось загрузить транзакции');
     } finally {
         toggleLoading(false);
@@ -20,7 +29,7 @@ async function loadTransactions(page = 1) {
 function getFilters() {
     const filters = {};
     const inputs = document.querySelectorAll('.filter-input');
-    console.log('Inputs found:', inputs.length); // Отладка
+    
     inputs.forEach(input => {
         if (input.value) {
             let paramName = input.id.replace('filter-', '');
@@ -37,15 +46,14 @@ function getFilters() {
             };
             paramName = paramMap[paramName] || paramName;
             let value = input.value;
-            // Преобразование даты в YYYY-MM-DD
+            
             if (paramName === 'date_from' || paramName === 'date_to') {
-                if (value.includes('.')) { // Если формат DD.MM.YYYY
+                if (value.includes('.')) {
                     const [day, month, year] = value.split('.');
                     value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                 }
             }
             filters[paramName] = value;
-            console.log(`Filter: ${paramName}=${value}`); // Отладка
         }
     });
     return filters;
@@ -55,8 +63,7 @@ function renderTransactions(transactions) {
     const tbody = document.getElementById('transactions-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '';
-    if (transactions.length === 0) {
+    if (!transactions || transactions.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-5">
@@ -70,15 +77,16 @@ function renderTransactions(transactions) {
         return;
     }
 
-    transactions.forEach(transaction => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
+    tbody.innerHTML = transactions.map(transaction => `
+        <tr>
             <td class="text-center">${formatDate(transaction.transaction_date)}</td>
-            <td>${transaction.status_name}</td>
+            <td><span class="badge bg-secondary">${transaction.status_name}</span></td>
             <td>${transaction.transaction_type_name}</td>
             <td>${transaction.category_name}</td>
             <td>${transaction.subcategory_name}</td>
-            <td class="text-end">${formatAmount(transaction.amount)}</td>
+            <td class="text-end fw-bold ${transaction.transaction_type_name === 'Пополнение' ? 'text-success' : 'text-danger'}">
+                ${formatAmount(transaction.amount)}
+            </td>
             <td>${transaction.comment || '-'}</td>
             <td class="text-center">
                 <button class="btn btn-sm btn-outline-primary me-1" 
@@ -90,9 +98,8 @@ function renderTransactions(transactions) {
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>
+    `).join('');
 }
 
 function renderPagination(data) {
@@ -100,41 +107,66 @@ function renderPagination(data) {
     const paginationInfo = document.getElementById('pagination-info');
     if (!pagination || !paginationInfo) return;
 
-    const currentPage = data.current_page || 1;
-    const totalPages = data.total_pages || 1;
-    const totalCount = data.count || 0;
-    const startIndex = data.start_index || 0;
-    const endIndex = data.end_index || 0;
+    const total_count = data.count || 0;
+    const next_url = data.next;
+    const previous_url = data.previous;
+    
+    // Определяем текущую страницу по URL
+    let current_page = 1;
+    
+    if (next_url) {
+        try {
+            const urlObj = new URL(next_url);
+            const pageParam = urlObj.searchParams.get('page');
+            if (pageParam) {
+                current_page = parseInt(pageParam) - 1;
+            }
+        } catch (e) {
+            console.error('Error parsing next URL:', e);
+        }
+    } else if (previous_url) {
+        try {
+            const urlObj = new URL(previous_url);
+            const pageParam = urlObj.searchParams.get('page');
+            if (pageParam) {
+                current_page = parseInt(pageParam) + 1;
+            }
+        } catch (e) {
+            console.error('Error parsing previous URL:', e);
+        }
+    }
+    
+    // Обеспечиваем корректные границы
+    current_page = Math.max(1, current_page);
+    const total_pages = Math.ceil(total_count / 10);
+    current_page = Math.min(current_page, total_pages);
+    
+    const start_index = (current_page - 1) * 10 + 1;
+    const end_index = Math.min(current_page * 10, total_count);
 
-    paginationInfo.textContent = `Показано ${startIndex}–${endIndex} из ${totalCount} записей`;
-
+    paginationInfo.textContent = `Показано ${start_index}–${end_index} из ${total_count} записей`;
     pagination.innerHTML = '';
-    const prevDisabled = !data.previous ? 'disabled' : '';
-    const nextDisabled = !data.next ? 'disabled' : '';
 
+    if (total_pages <= 1) return;
+
+    const prevDisabled = current_page <= 1;
+    const nextDisabled = current_page >= total_pages;
+
+    // Создаем кнопки с проверкой на disabled
+    const prevButton = prevDisabled ? 
+        '<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>' :
+        `<li class="page-item"><a class="page-link" href="#" onclick="loadTransactions(${current_page - 1}); return false;"><i class="bi bi-chevron-left"></i></a></li>`;
+    
+    const nextButton = nextDisabled ? 
+        '<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>' :
+        `<li class="page-item"><a class="page-link" href="#" onclick="loadTransactions(${current_page + 1}); return false;"><i class="bi bi-chevron-right"></i></a></li>`;
+    
     pagination.innerHTML = `
-        <li class="page-item ${prevDisabled}">
-            <a class="page-link" href="#" onclick="loadTransactions(${currentPage - 1}); return false;">
-                <i class="bi bi-chevron-left"></i>
-            </a>
+        ${prevButton}
+        <li class="page-item disabled">
+            <span class="page-link">${current_page} / ${total_pages}</span>
         </li>
-    `;
-
-    const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1);
-    pageRange.forEach(page => {
-        pagination.innerHTML += `
-            <li class="page-item ${page === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="loadTransactions(${page}); return false;">${page}</a>
-            </li>
-        `;
-    });
-
-    pagination.innerHTML += `
-        <li class="page-item ${nextDisabled}">
-            <a class="page-link" href="#" onclick="loadTransactions(${currentPage + 1}); return false;">
-                <i class="bi bi-chevron-right"></i>
-            </a>
-        </li>
+        ${nextButton}
     `;
 }
 
@@ -142,20 +174,19 @@ async function updateStatistics() {
     try {
         const filters = getFilters();
         const queryString = new URLSearchParams(filters).toString();
-        console.log('Statistics query:', queryString); // Отладка
         const data = await apiRequest(`transactions/summary/?${queryString}`);
-        console.log('API response:', data); // Отладка
 
         document.getElementById('total-count').textContent = data.summary?.total_count || 0;
         document.getElementById('total-income').textContent = formatAmount(data.summary?.income || 0);
         document.getElementById('total-expense').textContent = formatAmount(data.summary?.expense || 0);
         document.getElementById('total-balance').textContent = formatAmount(data.summary?.balance || 0);
     } catch (error) {
-        console.error('Error in updateStatistics:', error);
+        console.error('Error updating statistics:', error);
         showAlert('danger', 'Не удалось загрузить статистику');
     }
 }
 
+// Остальные функции остаются без изменений...
 async function loadFilterOptions() {
     try {
         const data = await apiRequest('reference-data/');
@@ -214,16 +245,56 @@ async function deleteTransaction(id) {
     try {
         await apiRequest(`transactions/${id}/`, 'DELETE');
         showAlert('success', 'Транзакция успешно удалена');
-        loadTransactions();
-        window.location.reload();
+        loadTransactions(currentPage);
     } catch (error) {
         showAlert('danger', 'Не удалось удалить транзакцию');
     }
 }
 
 function loadTransactionForm(id = null) {
-    console.log('loadTransactionForm called with id:', id);
-    window.location.href = id ? `/transaction/${id}/` : '/transaction/';
+    window.location.href = id ? `/transaction/${id}/` : '/transaction/new/';
+}
+
+// Утилиты форматирования
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU');
+}
+
+function formatAmount(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 2
+    }).format(amount);
+}
+
+function toggleLoading(show) {
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
+    if (loading && content) {
+        loading.style.display = show ? 'flex' : 'none';
+        content.style.opacity = show ? '0.5' : '1';
+    }
+}
+
+function showAlert(type, message) {
+    const alertsContainer = document.getElementById('alerts-container');
+    if (!alertsContainer) return;
+
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertsContainer.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
 }
 
 window.loadTransactions = loadTransactions;
