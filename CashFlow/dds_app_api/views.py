@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.db.models import Sum, Count
 
 from .models import Status, TransactionType, Category, Subcategory, Transaction
 from .serializers import (
@@ -156,23 +157,42 @@ class TransactionViewSet(viewsets.ModelViewSet):
         
         Returns:
             object: Статистика включающая общее количество, сумму, среднее значение,
-                   группировку по типам и категориям операций
+                   доход, расход, баланс, группировку по типам и категориям операций
         """
-        from django.db.models import Sum, Count
-        
         queryset = self.filter_queryset(self.get_queryset())
         
-        summary = queryset.aggregate(
+        # Выполняем агрегацию
+        agg_result = queryset.aggregate(
             total_count=Count('id'),
-            total_amount=Sum('amount'),
-            average_amount=Sum('amount') / Count('id') if Count('id') > 0 else 0
+            total_amount=Sum('amount')
         )
+        
+        total_count = agg_result['total_count'] or 0
+        average_amount = agg_result['total_amount'] / total_count if total_count > 0 else 0
+        
+        # Вычисляем доход и расход
+        income = queryset.filter(transaction_type__name='Пополнение').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        expense = queryset.filter(transaction_type__name='Списание').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        balance = income - expense
+        
+        summary = {
+            'total_count': total_count,
+            'total_amount': agg_result['total_amount'] or 0,
+            'average_amount': average_amount,
+            'income': income,
+            'expense': expense,
+            'balance': balance
+        }
         
         # Группировка по типам
         by_type = queryset.values('transaction_type__name').annotate(
             count=Count('id'),
             total=Sum('amount')
-        )
+        ).order_by('transaction_type__name')
         
         # Группировка по категориям
         by_category = queryset.values('category__name').annotate(
@@ -182,8 +202,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
         
         return Response({
             'summary': summary,
-            'by_type': by_type,
-            'by_category': by_category
+            'by_type': list(by_type),
+            'by_category': list(by_category)
         })
 
 class ReferenceDataView(generics.GenericAPIView):

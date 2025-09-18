@@ -20,9 +20,32 @@ async function loadTransactions(page = 1) {
 function getFilters() {
     const filters = {};
     const inputs = document.querySelectorAll('.filter-input');
+    console.log('Inputs found:', inputs.length); // Отладка
     inputs.forEach(input => {
         if (input.value) {
-            filters[input.id.replace('filter-', '')] = input.value;
+            let paramName = input.id.replace('filter-', '');
+            const paramMap = {
+                'type': 'transaction_type',
+                'status': 'status',
+                'category': 'category',
+                'subcategory': 'subcategory',
+                'date-from': 'date_from',
+                'date-to': 'date_to',
+                'amount-min': 'amount_min',
+                'amount-max': 'amount_max',
+                'search': 'search'
+            };
+            paramName = paramMap[paramName] || paramName;
+            let value = input.value;
+            // Преобразование даты в YYYY-MM-DD
+            if (paramName === 'date_from' || paramName === 'date_to') {
+                if (value.includes('.')) { // Если формат DD.MM.YYYY
+                    const [day, month, year] = value.split('.');
+                    value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+            }
+            filters[paramName] = value;
+            console.log(`Filter: ${paramName}=${value}`); // Отладка
         }
     });
     return filters;
@@ -118,19 +141,17 @@ function renderPagination(data) {
 async function updateStatistics() {
     try {
         const filters = getFilters();
-        const data = await apiRequest(`transactions/summary/?${new URLSearchParams(filters)}`);
-        document.getElementById('total-count').textContent = data.summary.total_count || 0;
-        document.getElementById('total-income').textContent = formatAmount(
-            data.by_type.find(t => t.transaction_type_name.includes('Пополнение'))?.total || 0
-        );
-        document.getElementById('total-expense').textContent = formatAmount(
-            data.by_type.find(t => t.transaction_type_name.includes('Списание'))?.total || 0
-        );
-        document.getElementById('total-balance').textContent = formatAmount(
-            (data.by_type.find(t => t.transaction_type_name.includes('Пополнение'))?.total || 0) -
-            (data.by_type.find(t => t.transaction_type_name.includes('Списание'))?.total || 0)
-        );
+        const queryString = new URLSearchParams(filters).toString();
+        console.log('Statistics query:', queryString); // Отладка
+        const data = await apiRequest(`transactions/summary/?${queryString}`);
+        console.log('API response:', data); // Отладка
+
+        document.getElementById('total-count').textContent = data.summary?.total_count || 0;
+        document.getElementById('total-income').textContent = formatAmount(data.summary?.income || 0);
+        document.getElementById('total-expense').textContent = formatAmount(data.summary?.expense || 0);
+        document.getElementById('total-balance').textContent = formatAmount(data.summary?.balance || 0);
     } catch (error) {
+        console.error('Error in updateStatistics:', error);
         showAlert('danger', 'Не удалось загрузить статистику');
     }
 }
@@ -194,13 +215,14 @@ async function deleteTransaction(id) {
         await apiRequest(`transactions/${id}/`, 'DELETE');
         showAlert('success', 'Транзакция успешно удалена');
         loadTransactions();
+        window.location.reload();
     } catch (error) {
         showAlert('danger', 'Не удалось удалить транзакцию');
     }
 }
 
 function loadTransactionForm(id = null) {
-    console.log('loadTransactionForm called with id:', id); // Для отладки
+    console.log('loadTransactionForm called with id:', id);
     window.location.href = id ? `/transaction/${id}/` : '/transaction/';
 }
 

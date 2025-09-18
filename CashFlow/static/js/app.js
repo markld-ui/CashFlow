@@ -22,6 +22,9 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        if (method === 'DELETE') {
+            return {};
+        }
         return await response.json();
     } catch (error) {
         showAlert('danger', `Ошибка: ${error.message}`);
