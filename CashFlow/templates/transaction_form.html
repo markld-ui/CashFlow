@@ -140,7 +140,13 @@
 <script src="/static/js/forms.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        initializeTransactionForm('{{ transaction_id|default:'' }}');
+        // Проверяем что transaction_id не равен 'new'
+        const transactionId = '{{ transaction_id|default:'' }}';
+        if (transactionId === 'new') {
+            initializeTransactionForm(null);
+        } else {
+            initializeTransactionForm('{{ transaction_id|default:'' }}');
+        }
     });
 </script>
 {% endblock %}
