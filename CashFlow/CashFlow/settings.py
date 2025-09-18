@@ -129,6 +129,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Настройки для DRF с пагинацией
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
@@ -156,6 +157,7 @@ MIDDLEWARE = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Настройки для Swagger-документации
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS' :
     {

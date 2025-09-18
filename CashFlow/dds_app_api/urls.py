@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
+
 router = DefaultRouter()
 router.register(r'statuses', views.StatusViewSet)
 router.register(r'transaction-types', views.TransactionTypeViewSet)

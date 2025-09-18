@@ -10,22 +10,40 @@ from rest_framework.pagination import PageNumberPagination
 
 from .models import Status, TransactionType, Category, Subcategory, Transaction
 from .serializers import (
-    StatusSerializer, TransactionTypeSerializer, CategorySerializer, 
-    SubcategorySerializer, TransactionSerializer, TransactionCreateSerializer,
-    CategoryDetailSerializer, TransactionTypeDetailSerializer
+    StatusSerializer,
+    TransactionTypeSerializer,
+    CategorySerializer,
+    SubcategorySerializer,
+    TransactionSerializer,
+    TransactionCreateSerializer,
+    CategoryDetailSerializer,
+    TransactionTypeDetailSerializer
 )
 from .filters import (
-    TransactionFilter, StatusFilter, TransactionTypeFilter, 
-    CategoryFilter, SubcategoryFilter
+    TransactionFilter,
+    StatusFilter,
+    TransactionTypeFilter,
+    CategoryFilter,
+    SubcategoryFilter
 )
+
 
 class StatusViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления статусами операций.
-    
-    Предоставляет CRUD операции для модели Status.
-    Поддерживает фильтрацию, поиск и сортировку.
+
+    Предоставляет полный CRUD (Create, Read, Update, Delete) для модели Status.
+    Поддерживает фильтрацию, поиск и сортировку по различным полям.
+
+    Attributes:
+        queryset (QuerySet): Набор всех объектов Status.
+        serializer_class (Serializer): Сериализатор для модели Status.
+        filter_backends (list): Список бэкендов фильтрации.
+        filterset_class (Filter): Класс фильтра для статусов.
+        search_fields (list): Поля, по которым доступен поиск.
+        ordering_fields (list): Поля, по которым доступна сортировка.
     """
+
     queryset = Status.objects.all()
     serializer_class = StatusSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -33,20 +51,30 @@ class StatusViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['name']
 
+
 class TransactionTypeViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления типами операций.
-    
-    Предоставляет CRUD операции для модели TransactionType.
-    Включает дополнительные endpoints для получения категорий по типу.
+
+    Предоставляет полный CRUD для модели TransactionType.
+    Включает дополнительные endpoints для получения связанных категорий.
+
+    Attributes:
+        queryset (QuerySet): Набор всех объектов TransactionType.
+        serializer_class (Serializer): Сериализатор для модели TransactionType.
+        filter_backends (list): Список бэкендов фильтрации.
+        filterset_class (Filter): Класс фильтра для типов операций.
+        search_fields (list): Поля, по которым доступен поиск.
+        ordering_fields (list): Поля, по которым доступна сортировка.
     """
+
     queryset = TransactionType.objects.all()
     serializer_class = TransactionTypeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = TransactionTypeFilter
     search_fields = ['name', 'description']
     ordering_fields = ['name']
-    
+
     @swagger_auto_schema(
         operation_description="Получить список категорий для указанного типа операции",
         responses={200: CategorySerializer(many=True)}
@@ -55,34 +83,55 @@ class TransactionTypeViewSet(viewsets.ModelViewSet):
     def categories(self, request, pk=None):
         """
         Получить категории для конкретного типа операции.
-        
+
+        Args:
+            request (HttpRequest): Объект HTTP-запроса.
+            pk (int): ID типа операции.
+
         Returns:
-            List[Category]: Список категорий, связанных с данным типом операции
+            Response: Ответ со списком категорий в формате JSON.
         """
         transaction_type = self.get_object()
         categories = transaction_type.category_set.all()
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
+
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления категориями операций.
-    
-    Предоставляет CRUD операции для модели Category.
-    Включает дополнительные endpoints для получения подкатегорий по категории.
+
+    Предоставляет полный CRUD для модели Category.
+    Включает дополнительные endpoints для получения связанных подкатегорий.
+
+    Attributes:
+        queryset (QuerySet): Набор всех объектов Category.
+        serializer_class (Serializer): Сериализатор по умолчанию.
+        filter_backends (list): Список бэкендов фильтрации.
+        filterset_class (Filter): Класс фильтра для категорий.
+        search_fields (list): Поля, по которым доступен поиск.
+        ordering_fields (list): Поля, по которым доступна сортировка.
     """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'transaction_type__name']
-    
+
     def get_serializer_class(self):
+        """
+        Возвращает соответствующий сериализатор в зависимости от действия.
+
+        Returns:
+            Serializer: CategoryDetailSerializer для retrieve-действия,
+            иначе CategorySerializer.
+        """
         if self.action == 'retrieve':
             return CategoryDetailSerializer
         return CategorySerializer
-    
+
     @swagger_auto_schema(
         operation_description="Получить список подкатегорий для указанной категории",
         responses={200: SubcategorySerializer(many=True)}
@@ -91,22 +140,36 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def subcategories(self, request, pk=None):
         """
         Получить подкатегории для конкретной категории.
-        
+
+        Args:
+            request (HttpRequest): Объект HTTP-запроса.
+            pk (int): ID категории.
+
         Returns:
-            List[Subcategory]: Список подкатегорий, связанных с данной категорией
+            Response: Ответ со списком подкатегорий в формате JSON.
         """
         category = self.get_object()
         subcategories = category.subcategory_set.all()
         serializer = SubcategorySerializer(subcategories, many=True)
         return Response(serializer.data)
 
+
 class SubcategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления подкатегориями операций.
-    
-    Предоставляет CRUD операции для модели Subcategory.
+
+    Предоставляет полный CRUD для модели Subcategory.
     Поддерживает фильтрацию по категории и типу операции.
+
+    Attributes:
+        queryset (QuerySet): Набор всех объектов Subcategory.
+        serializer_class (Serializer): Сериализатор для модели Subcategory.
+        filter_backends (list): Список бэкендов фильтрации.
+        filterset_class (Filter): Класс фильтра для подкатегорий.
+        search_fields (list): Поля, по которым доступен поиск.
+        ordering_fields (list): Поля, по которым доступна сортировка.
     """
+
     queryset = Subcategory.objects.all()
     serializer_class = SubcategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -114,13 +177,24 @@ class SubcategoryViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description', 'category__name']
     ordering_fields = ['name', 'category__name']
 
+
 class TransactionViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления транзакциями ДДС.
-    
+
     Предоставляет полный CRUD для операций движения денежных средств.
     Включает расширенную фильтрацию, поиск и статистические endpoints.
+
+    Attributes:
+        queryset (QuerySet): Набор транзакций с предзагрузкой связанных объектов.
+        filter_backends (list): Список бэкендов фильтрации.
+        filterset_class (Filter): Класс фильтра для транзакций.
+        search_fields (list): Поля, по которым доступен поиск.
+        ordering_fields (list): Поля, по которым доступна сортировка.
+        pagination_class (Pagination): Класс пагинации.
+        page_size (int): Количество элементов на странице.
     """
+
     queryset = Transaction.objects.select_related(
         'status', 'transaction_type', 'category', 'subcategory'
     ).order_by('-transaction_date')
@@ -129,21 +203,34 @@ class TransactionViewSet(viewsets.ModelViewSet):
     search_fields = ['comment', 'category__name', 'subcategory__name']
     ordering_fields = ['transaction_date', 'amount', 'created_date']
     pagination_class = PageNumberPagination
-    page_size = 10  # 10 элементов на страницу
-    
+    page_size = 10
+
     def get_serializer_class(self):
+        """
+        Возвращает соответствующий сериализатор в зависимости от действия.
+
+        Returns:
+            Serializer: TransactionCreateSerializer для create/update действий,
+            иначе TransactionSerializer.
+        """
         if self.action in ['create', 'update', 'partial_update']:
             return TransactionCreateSerializer
         return TransactionSerializer
-    
+
     def list(self, request, *args, **kwargs):
+        """
+        Переопределенный метод list для добавления пагинационной информации.
+
+        Returns:
+            Response: Ответ с данными и дополнительной пагинационной информацией.
+        """
         response = super().list(request, *args, **kwargs)
-        
+
         # Проверяем что пагинатор существует
         if hasattr(response, 'paginator') and response.paginator is not None:
             page = response.paginator.page
             paginator = response.paginator.page.paginator
-            
+
             response.data.update({
                 'pagination': {
                     'current_page': page.number,
@@ -157,18 +244,41 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     'end_index': page.end_index(),
                 }
             })
-        
+
         return response
-    
+
     def perform_create(self, serializer):
+        """
+        Выполняет сохранение сериализатора при создании транзакции.
+
+        Args:
+            serializer (Serializer): Сериализатор с валидными данными.
+        """
         serializer.save()
-    
+
     @swagger_auto_schema(
         operation_description="Получить статистику по транзакциям",
         manual_parameters=[
-            openapi.Parameter('date_from', openapi.IN_QUERY, description="Начальная дата периода", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
-            openapi.Parameter('date_to', openapi.IN_QUERY, description="Конечная дата периода", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
-            openapi.Parameter('transaction_type', openapi.IN_QUERY, description="ID типа операции", type=openapi.TYPE_INTEGER),
+            openapi.Parameter(
+                'date_from',
+                openapi.IN_QUERY,
+                description="Начальная дата периода",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'date_to',
+                openapi.IN_QUERY,
+                description="Конечная дата периода",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'transaction_type',
+                openapi.IN_QUERY,
+                description="ID типа операции",
+                type=openapi.TYPE_INTEGER
+            ),
         ],
         responses={200: openapi.Response('Статистика транзакций')}
     )
@@ -176,27 +286,34 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def summary(self, request):
         """
         Получить статистическую сводку по транзакциям.
+
+        Returns:
+            Response: Ответ со статистикой, сгруппированной по типам и категориям.
         """
         queryset = self.filter_queryset(self.get_queryset())
-        
+
         # Выполняем агрегацию
         agg_result = queryset.aggregate(
             total_count=Count('id'),
             total_amount=Sum('amount')
         )
-        
+
         total_count = agg_result['total_count'] or 0
-        average_amount = agg_result['total_amount'] / total_count if total_count > 0 else 0
-        
+        average_amount = (
+            agg_result['total_amount'] / total_count if total_count > 0 else 0
+        )
+
         # Вычисляем доход и расход
-        income = queryset.filter(transaction_type__name='Пополнение').aggregate(
-            total=Sum('amount')
-        )['total'] or 0
-        expense = queryset.filter(transaction_type__name='Списание').aggregate(
-            total=Sum('amount')
-        )['total'] or 0
+        income = queryset.filter(
+            transaction_type__name='Пополнение'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        expense = queryset.filter(
+            transaction_type__name='Списание'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
         balance = income - expense
-        
+
         summary = {
             'total_count': total_count,
             'total_amount': agg_result['total_amount'] or 0,
@@ -205,30 +322,34 @@ class TransactionViewSet(viewsets.ModelViewSet):
             'expense': expense,
             'balance': balance
         }
-        
+
         # Группировка по типам
         by_type = queryset.values('transaction_type__name').annotate(
             count=Count('id'),
             total=Sum('amount')
         ).order_by('transaction_type__name')
-        
+
         # Группировка по категориям
         by_category = queryset.values('category__name').annotate(
             count=Count('id'),
             total=Sum('amount')
         ).order_by('-total')[:10]
-        
+
         return Response({
             'summary': summary,
             'by_type': list(by_type),
             'by_category': list(by_category)
         })
 
+
 class ReferenceDataView(generics.GenericAPIView):
     """
-    API View для получения всех справочных данных.
+    API View для получения всех справочных данных системы.
+
+    Предоставляет единую точку входа для получения всех справочников,
+    необходимых для работы фронтенд-приложения.
     """
-    
+
     @swagger_auto_schema(
         operation_description="Получить все справочные данные системы",
         responses={
@@ -261,17 +382,20 @@ class ReferenceDataView(generics.GenericAPIView):
     def get(self, request):
         """
         Получить все справочные данные для фронтенда.
+
+        Returns:
+            Response: Ответ со всеми справочными данными в формате JSON.
         """
         statuses = Status.objects.all()
         transaction_types = TransactionType.objects.all()
         categories = Category.objects.all()
         subcategories = Subcategory.objects.all()
-        
+
         status_serializer = StatusSerializer(statuses, many=True)
         type_serializer = TransactionTypeSerializer(transaction_types, many=True)
         category_serializer = CategorySerializer(categories, many=True)
         subcategory_serializer = SubcategorySerializer(subcategories, many=True)
-        
+
         return Response({
             'statuses': status_serializer.data,
             'transaction_types': type_serializer.data,

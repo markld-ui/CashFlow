@@ -22,6 +22,7 @@ from drf_yasg import openapi
 from dds_app_api import views_frontend
 
 
+# Схема OpenAPI для Swagger-документации
 schema_view = get_schema_view(
     openapi.Info(
         title = "DDS API",
