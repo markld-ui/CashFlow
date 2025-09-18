@@ -1,14 +1,15 @@
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
             <i class="bi bi-database me-2"></i>{{ title }}
         </h5>
-        <button class="btn btn-sm btn-primary" onclick="showAddModal('{{ api_url }}')">
+        <button class="btn btn-sm btn-primary" onclick="showAddModal('{{ api_url }}', '{{ fields }}')">
             <i class="bi bi-plus-circle me-1"></i>Добавить
         </button>
     </div>
     
     <div class="card-body">
+        <!-- Search and Filters -->
         <div class="row mb-3">
             <div class="col-md-8">
                 <div class="input-group">
@@ -16,44 +17,41 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" class="form-control" placeholder="Поиск..." 
+                           id="search-{{ api_url|slugify }}"
                            oninput="filterReferences('{{ api_url }}', this.value)">
                 </div>
             </div>
             <div class="col-md-4">
                 {% if extra_fields %}
-                <select class="form-select" onchange="filterByRelation('{{ api_url }}', this.value)">
+                <select class="form-select" id="filter-{{ api_url|slugify }}"
+                        onchange="filterByRelation('{{ api_url }}', this.value, '{{ extra_fields }}')">
                     <option value="">Все {{ extra_fields }}</option>
                 </select>
                 {% endif %}
             </div>
         </div>
 
+        <!-- Table -->
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead class="table-light">
                     <tr>
-                        {% if fields contains 'name' %}
                         <th>Название</th>
-                        {% endif %}
-                        
-                        {% if fields contains 'transaction_type' %}
+                        {% if "transaction_type" in fields %}
                         <th>Тип операции</th>
                         {% endif %}
-                        
-                        {% if fields contains 'category' %}
+                        {% if "category" in fields %}
                         <th>Категория</th>
                         {% endif %}
-                        
-                        {% if fields contains 'description' %}
+                        {% if "description" in fields %}
                         <th>Описание</th>
                         {% endif %}
-                        
                         <th class="text-center" style="width: 100px;">Действия</th>
                     </tr>
                 </thead>
-                <tbody id="{{ api_url|replace('/api/', '')|replace('/', '') }}-table">
+                <tbody id="{{ api_url|cut:'/api/'|cut:'/' }}-table">
                     <tr>
-                        <td colspan="{% if fields contains 'description' %}4{% else %}3{% endif %}" class="text-center py-4">
+                        <td colspan="{% if 'description' in fields %}4{% else %}3{% endif %}" class="text-center py-4">
                             <div class="text-muted">
                                 <i class="bi bi-database fs-1 d-block mb-2"></i>
                                 Загрузка данных...
@@ -62,88 +60,6 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="referenceModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Добавить запись</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="referenceForm">
-                    <input type="hidden" id="referenceId">
-                    <input type="hidden" id="referenceApiUrl">
-                    
-                    <div class="row">
-                        {% if fields contains 'name' %}
-                        <div class="col-md-6 mb-3">
-                            <label for="modalName" class="form-label">Название *</label>
-                            <input type="text" class="form-control" id="modalName" required>
-                        </div>
-                        {% endif %}
-                        
-                        {% if fields contains 'transaction_type' %}
-                        <div class="col-md-6 mb-3">
-                            <label for="modalTransactionType" class="form-label">Тип операции *</label>
-                            <select class="form-select" id="modalTransactionType" required>
-                                <option value="">Выберите тип...</option>
-                            </select>
-                        </div>
-                        {% endif %}
-                        
-                        {% if fields contains 'category' %}
-                        <div class="col-md-6 mb-3">
-                            <label for="modalCategory" class="form-label">Категория *</label>
-                            <select class="form-select" id="modalCategory" required>
-                                <option value="">Выберите категорию...</option>
-                            </select>
-                        </div>
-                        {% endif %}
-                        
-                        {% if fields contains 'description' %}
-                        <div class="col-12 mb-3">
-                            <label for="modalDescription" class="form-label">Описание</label>
-                            <textarea class="form-control" id="modalDescription" rows="3"></textarea>
-                        </div>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Отмена
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveReference()">
-                    <i class="bi bi-check-circle me-1"></i>Сохранить
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Подтверждение удаления</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Вы уверены, что хотите удалить эту запись?</p>
-                <p class="text-muted small">Это действие нельзя будет отменить.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Отмена
-                </button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                    <i class="bi bi-trash me-1"></i>Удалить
-                </button>
-            </div>
         </div>
     </div>
 </div>

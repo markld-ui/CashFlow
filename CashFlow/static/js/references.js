@@ -9,7 +9,7 @@ async function initializeReferences() {
             loadReferences('categories'),
             loadReferences('subcategories')
         ]);
-        loadFilterOptions();
+        await loadFilterOptions();
     } catch (error) {
         showAlert('danger', 'Не удалось загрузить справочники');
     } finally {
@@ -17,17 +17,20 @@ async function initializeReferences() {
     }
 }
 
-async function loadReferences(endpoint) {
+async function loadReferences(endpoint, query = '') {
     try {
-        const data = await apiRequest(`${endpoint}/`);
         const tableBody = document.getElementById(endpoint.replace('api/', '').replace('/', '') + '-table');
         if (!tableBody) return;
 
+        // Загружаем справочные данные для transaction_type и category
+        const referenceData = await apiRequest('reference-data/');
+        const data = await apiRequest(`${endpoint}/${query}`);
+
         tableBody.innerHTML = '';
-        if (data.results.length === 0) {
+        if (!data.results || data.results.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-center py-4">
+                    <td colspan="${tableBody.getAttribute('data-fields').split(',').length + 1}" class="text-center py-4">
                         <div class="text-muted">
                             <i class="bi bi-database fs-1 d-block mb-2"></i>
                             Нет данных
@@ -38,14 +41,36 @@ async function loadReferences(endpoint) {
             return;
         }
 
+        const fields = tableBody.getAttribute('data-fields').split(',');
+        const extraFields = tableBody.getAttribute('data-extra-fields')?.split(',') || [];
+        const seenIds = new Set(); // Проверка дубликатов
+
         data.results.forEach(item => {
+            if (seenIds.has(item.id)) {
+                console.warn('Duplicate item skipped:', item);
+                return;
+            }
+            seenIds.add(item.id);
+
             const row = document.createElement('tr');
-            row.innerHTML = `
-                ${endpoint.includes('statuses') || endpoint.includes('transaction-types') ? 
-                    `<td>${item.name}</td><td>${item.description || '-'}</td>` :
-                    endpoint.includes('categories') ? 
-                    `<td>${item.name}</td><td>${item.transaction_type_name}</td><td>${item.description || '-'}</td>` :
-                    `<td>${item.name}</td><td>${item.category_name}</td><td>${item.description || '-'}</td>`}
+            let rowHtml = '';
+
+            fields.forEach(field => {
+                let value = item[field] || '-';
+                // Заменяем ID на имена для extra_fields
+                if (extraFields.includes(field)) {
+                    if (field === 'transaction_type' && referenceData.transaction_types) {
+                        const type = referenceData.transaction_types.find(t => t.id === value);
+                        value = type ? type.name : value;
+                    } else if (field === 'category' && referenceData.categories) {
+                        const category = referenceData.categories.find(c => c.id === value);
+                        value = category ? category.name : value;
+                    }
+                }
+                rowHtml += `<td>${value}</td>`;
+            });
+
+            rowHtml += `
                 <td class="text-center">
                     <button class="btn btn-sm btn-outline-primary me-1" 
                             onclick="showEditModal('${endpoint}', ${item.id})">
@@ -57,6 +82,7 @@ async function loadReferences(endpoint) {
                     </button>
                 </td>
             `;
+            row.innerHTML = rowHtml;
             tableBody.appendChild(row);
         });
     } catch (error) {
@@ -94,6 +120,13 @@ function showAddModal(endpoint) {
     document.getElementById('referenceId').value = '';
     document.getElementById('referenceApiUrl').value = endpoint;
     document.getElementById('referenceForm').reset();
+    
+    // Очищаем select'ы для categories и subcategories
+    const typeSelect = document.getElementById('modalTransactionType');
+    const categorySelect = document.getElementById('modalCategory');
+    if (typeSelect) typeSelect.innerHTML = '<option value="">Выберите тип...</option>';
+    if (categorySelect) categorySelect.innerHTML = '<option value="">Выберите категорию...</option>';
+    
     modal.show();
 }
 
@@ -110,7 +143,7 @@ async function showEditModal(endpoint, id) {
         
         if (endpoint.includes('categories')) {
             const typeSelect = document.getElementById('modalTransactionType');
-            typeSelect.innerHTML = '';
+            typeSelect.innerHTML = '<option value="">Выберите тип...</option>';
             const types = await apiRequest('transaction-types/');
             types.results.forEach(type => {
                 typeSelect.innerHTML += `<option value="${type.id}" ${type.id === data.transaction_type ? 'selected' : ''}>${type.name}</option>`;
@@ -119,7 +152,7 @@ async function showEditModal(endpoint, id) {
         
         if (endpoint.includes('subcategories')) {
             const categorySelect = document.getElementById('modalCategory');
-            categorySelect.innerHTML = '';
+            categorySelect.innerHTML = '<option value="">Выберите категорию...</option>';
             const categories = await apiRequest('categories/');
             categories.results.forEach(category => {
                 categorySelect.innerHTML += `<option value="${category.id}" ${category.id === data.category ? 'selected' : ''}>${category.name}</option>`;

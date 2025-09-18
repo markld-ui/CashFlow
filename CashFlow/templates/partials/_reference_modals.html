@@ -1,0 +1,76 @@
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="referenceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Добавить запись</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="referenceForm">
+                    <input type="hidden" id="referenceId">
+                    <input type="hidden" id="referenceApiUrl">
+                    <input type="hidden" id="referenceFields">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modalName" class="form-label">Название *</label>
+                            <input type="text" class="form-control" id="modalName" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="modalTransactionTypeContainer" style="display: none;">
+                            <label for="modalTransactionType" class="form-label">Тип операции *</label>
+                            <select class="form-select" id="modalTransactionType">
+                                <option value="">Выберите тип...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="modalCategoryContainer" style="display: none;">
+                            <label for="modalCategory" class="form-label">Категория *</label>
+                            <select class="form-select" id="modalCategory">
+                                <option value="">Выберите категорию...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="modalDescription" class="form-label">Описание</label>
+                            <textarea class="form-control" id="modalDescription" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Отмена
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveReference()">
+                    <i class="bi bi-check-circle me-1"></i>Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить эту запись?</p>
+                <p class="text-muted small">Это действие нельзя будет отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Отмена
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="bi bi-trash me-1"></i>Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
