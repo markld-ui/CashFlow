@@ -24,7 +24,25 @@ async function initializeTransactionForm(transactionId = null) {
 
     setupFormValidation();
 
-    if (transactionId) {
+    // Очищаем форму для новой транзакции
+    if (!transactionId) {
+      const form = document.getElementById("transaction-form");
+      if (form) form.reset();
+      document.getElementById("transaction-id").value = "";
+      const categorySelect = document.getElementById("category");
+      const subcategorySelect = document.getElementById("subcategory");
+      if (categorySelect) {
+        categorySelect.innerHTML = '<option value="">Выберите категорию...</option>';
+        categorySelect.disabled = true;
+      }
+      if (subcategorySelect) {
+        subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию...</option>';
+        subcategorySelect.disabled = true;
+      }
+    }
+
+    // Загружаем данные только для редактирования (если transactionId - число)
+    if (transactionId && !isNaN(parseInt(transactionId))) {
       await loadTransactionData(transactionId);
     }
   } catch (error) {
@@ -182,12 +200,13 @@ function setupFormValidation() {
 
     try {
       toggleLoading(true);
-      if (id) {
-        await apiRequest(`transactions/${id}/`, "PUT", data);
-        showAlert("success", "Транзакция успешно обновлена");
-      } else {
-        await apiRequest("transactions/", "POST", data);
-        showAlert("success", "Транзакция успешно создана");
+      if (id) 
+      {
+        await apiRequest(`transactions/${id}/`, "PUT", data); // Оставляем как есть для API
+      } 
+      else 
+      {
+        await apiRequest("transactions/", "POST", data); // Оставляем как есть для API
       }
       window.location.href = "/";
     } catch (error) {

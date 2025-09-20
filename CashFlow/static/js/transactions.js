@@ -186,7 +186,6 @@ async function updateStatistics() {
     }
 }
 
-// Остальные функции остаются без изменений...
 async function loadFilterOptions() {
     try {
         const data = await apiRequest('reference-data/');
@@ -252,7 +251,11 @@ async function deleteTransaction(id) {
 }
 
 function loadTransactionForm(id = null) {
-    window.location.href = id ? `/transaction/${id}/` : '/transaction/new/';
+    if (id) {
+        window.location.href = `/transaction/${id}/`;
+    } else {
+        window.location.href = '/transaction/';
+    }
 }
 
 // Утилиты форматирования

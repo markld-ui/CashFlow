@@ -23,8 +23,19 @@ async function loadReferences(endpoint, query = '') {
         if (!tableBody) return;
 
         // Загружаем справочные данные для transaction_type и category
+        let apiEndpoint = endpoint;
+        if (endpoint === 'statuses') apiEndpoint = 'statuses';
+        if (endpoint === 'transaction-types') apiEndpoint = 'transaction-types';
+        if (endpoint === 'categories') apiEndpoint = 'categories';
+        if (endpoint === 'subcategories') apiEndpoint = 'subcategories';
+
+        let apiQuery = query;
+        if (query && query.startsWith('/')) {
+            apiQuery = query.substring(1);
+        }
+
         const referenceData = await apiRequest('reference-data/');
-        const data = await apiRequest(`${endpoint}/${query}`);
+        const data = await apiRequest(`${endpoint}${apiQuery}`);
 
         tableBody.innerHTML = '';
         if (!data.results || data.results.length === 0) {
@@ -132,6 +143,12 @@ function showAddModal(endpoint) {
 
 async function showEditModal(endpoint, id) {
     try {
+        let apiEndpoint = endpoint;
+        if (endpoint === 'statuses') apiEndpoint = 'statuses';
+        if (endpoint === 'transaction-types') apiEndpoint = 'transaction-types';
+        if (endpoint === 'categories') apiEndpoint = 'categories';
+        if (endpoint === 'subcategories') apiEndpoint = 'subcategories';
+
         const data = await apiRequest(`${endpoint}/${id}/`);
         const modal = new bootstrap.Modal(document.getElementById('referenceModal'));
         document.getElementById('modalTitle').textContent = 'Редактировать запись';
@@ -175,6 +192,13 @@ function showDeleteModal(endpoint, id) {
 async function saveReference() {
     const endpoint = document.getElementById('referenceApiUrl').value;
     const id = document.getElementById('referenceId').value;
+
+    let apiEndpoint = endpoint;
+    if (endpoint === 'statuses') apiEndpoint = 'statuses';
+    if (endpoint === 'transaction-types') apiEndpoint = 'transaction-types';
+    if (endpoint === 'categories') apiEndpoint = 'categories';
+    if (endpoint === 'subcategories') apiEndpoint = 'subcategories';
+
     const data = {
         name: document.getElementById('modalName').value,
         description: document.getElementById('modalDescription').value
@@ -188,12 +212,13 @@ async function saveReference() {
     }
 
     try {
-        if (id) {
-            await apiRequest(`${endpoint}/${id}/`, 'PUT', data);
-            showAlert('success', 'Запись успешно обновлена');
-        } else {
-            await apiRequest(`${endpoint}/`, 'POST', data);
-            showAlert('success', 'Запись успешно создана');
+        if (id) 
+        {
+            await apiRequest(`${apiEndpoint}/${id}/`, 'PUT', data);
+        }
+        else
+        {
+            await apiRequest(`${apiEndpoint}/`, 'POST', data);
         }
         loadReferences(endpoint);
         bootstrap.Modal.getInstance(document.getElementById('referenceModal')).hide();
@@ -207,8 +232,14 @@ async function confirmDelete() {
     const endpoint = modal.dataset.endpoint;
     const id = modal.dataset.id;
 
+    let apiEndpoint = endpoint;
+    if (endpoint === 'statuses') apiEndpoint = 'statuses';
+    if (endpoint === 'transaction-types') apiEndpoint = 'transaction-types';
+    if (endpoint === 'categories') apiEndpoint = 'categories';
+    if (endpoint === 'subcategories') apiEndpoint = 'subcategories';
+
     try {
-        await apiRequest(`${endpoint}/${id}/`, 'DELETE');
+        await apiRequest(`${apiEndpoint}/${id}/`, 'DELETE');
         showAlert('success', 'Запись успешно удалена');
         loadReferences(endpoint);
         bootstrap.Modal.getInstance(modal).hide();
