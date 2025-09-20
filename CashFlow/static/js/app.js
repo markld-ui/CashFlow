@@ -1,6 +1,3 @@
-// static/js/app.js
-
-// Базовый URL для API
 const API_BASE_URL = '/api/';
 
 // Функция для выполнения API-запросов

@@ -1,5 +1,3 @@
-// static/js/forms.js
-
 async function initializeTransactionForm(transactionId = null) {
   console.log("initializeTransactionForm called with id:", transactionId);
   toggleLoading(true);
@@ -202,11 +200,11 @@ function setupFormValidation() {
       toggleLoading(true);
       if (id) 
       {
-        await apiRequest(`transactions/${id}/`, "PUT", data); // Оставляем как есть для API
+        await apiRequest(`transactions/${id}/`, "PUT", data);
       } 
       else 
       {
-        await apiRequest("transactions/", "POST", data); // Оставляем как есть для API
+        await apiRequest("transactions/", "POST", data);
       }
       window.location.href = "/";
     } catch (error) {

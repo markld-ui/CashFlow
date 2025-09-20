@@ -1,5 +1,3 @@
-// static/js/transactions.js
-
 let currentPage = 1;
 
 async function loadTransactions(page = 1) {

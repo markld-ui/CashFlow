@@ -1,5 +1,3 @@
-// static/js/references.js
-
 async function initializeReferences() {
     try {
         toggleLoading(true);
